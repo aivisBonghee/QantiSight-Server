@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, case as sql_case
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
@@ -12,6 +12,23 @@ from app.models import Case, QcResult, Comment
 from app.schemas import CaseResponse, CaseListResponse, CaseCreate, CaseConfirmRequest, CommentCreate, CommentResponse
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
+
+IHC_STAINS = {"HER2", "ER", "PR", "KI67"}
+
+_stain_match_expr = or_(
+    and_(QcResult.stain_classification == "HE", Case.stain_type == "HE"),
+    and_(QcResult.stain_classification.like("IHC%"), Case.stain_type.in_(list(IHC_STAINS))),
+)
+
+
+def _stain_matches_py(case_stain: str, detected: str) -> bool:
+    if not detected or detected == "uncertain":
+        return False
+    if detected == "HE":
+        return case_stain == "HE"
+    if detected.startswith("IHC"):
+        return case_stain in IHC_STAINS
+    return detected == case_stain
 
 
 def _apply_filters(query, params: dict):
@@ -50,7 +67,7 @@ def _apply_filters(query, params: dict):
         if params.get("has_issue"):
             query = query.filter(or_(
                 QcResult.organ_match == False,
-                QcResult.stain_classification != Case.stain_type,
+                ~_stain_match_expr,
                 QcResult.control_tissue_present == False,
                 QcResult.overall_qc_score < 60,
             ))
@@ -58,9 +75,9 @@ def _apply_filters(query, params: dict):
             query = query.filter(QcResult.organ_match == (params["organ_match"] == "match"))
         if params.get("stain_match") is not None:
             if params["stain_match"] == "match":
-                query = query.filter(QcResult.stain_classification == Case.stain_type)
+                query = query.filter(_stain_match_expr)
             else:
-                query = query.filter(QcResult.stain_classification != Case.stain_type)
+                query = query.filter(~_stain_match_expr)
         if params.get("control_tissue") is not None:
             query = query.filter(QcResult.control_tissue_present == (params["control_tissue"] == "present"))
         if params.get("qc_grade"):
@@ -145,15 +162,16 @@ def get_summary(
     base = _apply_filters(base, params)
     total = base.count()
 
+    qc_already_joined = any(v is not None for v in [organ_match, stain_match, control_tissue, qc_grade, has_issue])
     done_base = _apply_filters(db.query(Case), params).filter(Case.status == "DONE")
-    done = done_base.join(QcResult)
+    done = done_base if qc_already_joined else done_base.join(QcResult)
     done_count = done.count()
 
     organ_match_count = done.filter(QcResult.organ_match == True).count()
     stain_correct = 0
     if done_count > 0:
         rows = done.with_entities(Case.stain_type, QcResult.stain_classification).all()
-        stain_correct = sum(1 for r in rows if r[0] == r[1])
+        stain_correct = sum(1 for r in rows if _stain_matches_py(r[0], r[1]))
 
     lesion_stats = done.filter(QcResult.lesion_area_ratio.isnot(None)).with_entities(
         func.avg(QcResult.lesion_area_ratio),

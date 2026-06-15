@@ -22,7 +22,7 @@ GIVEN_NAMES = [
 HOSPITALS = ["SMC", "KUMC", "HALLYM", "SCHMC"]
 HOSPITAL_WEIGHTS = [0.3, 0.25, 0.2, 0.25]
 STAINS = ["HE", "HER2", "ER", "PR", "KI67"]
-ORGANS = ["Stomach", "Colon", "Breast", "Lung", "Kidney"]
+ORGANS = ["Breast", "Stomach", "Bladder", "Thyroid", "Colon", "Brain"]
 SERVERS = ["server-1", "server-2", "server-3", "server-4", "server-5"]
 DIAGNOSES = [
     "Adenocarcinoma", "Squamous cell carcinoma", "Ductal carcinoma in situ",

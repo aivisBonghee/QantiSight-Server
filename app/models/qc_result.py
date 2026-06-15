@@ -19,7 +19,7 @@ class QcResult(Base):
     detected_organ = Column(String(20))
     organ_confidence = Column(Float)
 
-    stain_classification = Column(String(10))
+    stain_classification = Column(String(20))
     stain_confidence = Column(Float)
 
     lesion_area_ratio = Column(Float)
@@ -27,6 +27,8 @@ class QcResult(Base):
 
     control_tissue_present = Column(Boolean)
     control_tissue_confidence = Column(Float)
+
+    lesion_detail = Column(String)
 
     blur_regions = Column(String)
     artifact_regions = Column(String)

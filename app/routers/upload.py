@@ -2,7 +2,6 @@ import uuid
 import os
 import random
 import string
-import threading
 import logging
 from datetime import datetime
 from typing import Optional
@@ -10,10 +9,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
 
-from app.database import get_db, SessionLocal
+from app.database import get_db
 from app.models import Case
 from app.services.storage import save_image, generate_thumbnail
-from app.services.sftp_storage import upload_to_data_server, is_data_server_configured
+from app.services.ai_analysis import start_analysis_background
 
 logger = logging.getLogger(__name__)
 
@@ -21,22 +20,6 @@ router = APIRouter(prefix="/api/upload", tags=["upload"])
 
 UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads"))
 THUMB_DIR = os.path.join(UPLOAD_DIR, "thumbnails")
-
-
-def _sftp_transfer_background(case_id: str, local_path: str, original_name: str):
-    db = SessionLocal()
-    try:
-        remote_path = upload_to_data_server(local_path, original_name)
-        case = db.query(Case).filter(Case.id == case_id).first()
-        if case:
-            case.image_path = remote_path
-            db.commit()
-        os.remove(local_path)
-        logger.info(f"SFTP transfer complete: {original_name} -> {remote_path}")
-    except Exception as e:
-        logger.error(f"SFTP transfer failed for {original_name}: {e}")
-    finally:
-        db.close()
 
 
 @router.post("")
@@ -107,13 +90,13 @@ async def upload_slide(
     db.commit()
     db.refresh(case)
 
-    if is_data_server_configured():
-        thread = threading.Thread(
-            target=_sftp_transfer_background,
-            args=(case.id, local_path, original_name),
-            daemon=True,
-        )
-        thread.start()
+    start_analysis_background(
+        case_id=case.id,
+        local_path=local_path,
+        filename=local_filename,
+        organ=organ,
+        stain_type=stain_type,
+    )
 
     return {
         "case_id": case.id,
@@ -122,13 +105,14 @@ async def upload_slide(
         "image_path": case.image_path,
         "thumbnail_path": case.thumbnail_path,
         "original_name": original_name,
-        "remote_transfer": "started" if is_data_server_configured() else "local_only",
+        "analysis": "started",
         "message": "Upload successful",
     }
 
 
 @router.get("/status")
 def upload_status():
+    from app.services.sftp_storage import is_data_server_configured
     return {
         "data_server_configured": is_data_server_configured(),
         "local_upload_dir": UPLOAD_DIR,

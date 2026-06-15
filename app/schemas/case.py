@@ -32,6 +32,7 @@ class QcResultResponse(BaseModel):
     stain_confidence: Optional[float]
     lesion_area_ratio: Optional[float]
     lesion_volume: Optional[str]
+    lesion_detail: Optional[str] = None
     control_tissue_present: Optional[bool]
     control_tissue_confidence: Optional[float]
     analyzed_at: Optional[datetime]
@@ -78,6 +79,8 @@ class CaseResponse(BaseModel):
     ihc_markers: Optional[str] = None
     molecular_test: Optional[str] = None
     clinical_info: Optional[str] = None
+    analysis_progress: Optional[int] = 0
+    analysis_step: Optional[str] = None
     created_at: Optional[datetime]
     qc_result: Optional[QcResultResponse]
     comments: List[CommentResponse] = []

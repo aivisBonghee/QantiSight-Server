@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text, func
+from sqlalchemy import Column, String, Integer, DateTime, Text, func
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -28,6 +28,9 @@ class Case(Base):
     ihc_markers = Column(String(300))
     molecular_test = Column(String(200))
     clinical_info = Column(Text)
+    analysis_progress = Column(Integer, default=0)
+    analysis_step = Column(String(50))
+    analysis_task_id = Column(String(100))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
