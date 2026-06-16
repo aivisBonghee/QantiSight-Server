@@ -18,7 +18,7 @@ TOOL_DECLARATIONS = [
     },
     {
         "name": "search_cases",
-        "description": "조건에 맞는 케이스를 검색합니다. 장기, 염색, 상태, 장기일치/염색일치 여부로 필터링할 수 있습니다.",
+        "description": "조건에 맞는 케이스를 검색합니다. 결과에 total(전체 건수)과 returned(반환 건수)가 포함됩니다. 반드시 '총 N건 중 M건 표시'처럼 전체 건수를 사용자에게 알려주세요.",
         "parameters": {
             "type": "object",
             "properties": {
