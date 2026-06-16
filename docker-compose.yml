@@ -20,11 +20,27 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://qantisight:qantisight@db:5432/qantisight
+      AI_MODEL_URL: http://ai-model:8888
+      AI_MODEL_UPLOAD_BASE: /data
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - uploads:/app/uploads
+
+  ai-model:
+    image: qantisight-ai-model:latest
+    ports:
+      - "8888:8888"
+    volumes:
+      - uploads:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   frontend:
     build:

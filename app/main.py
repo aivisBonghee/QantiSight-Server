@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 
 from app.database import engine, Base
-from app.routers import cases_router, search_router, upload_router, analysis_router
+from app.routers import cases_router, search_router, upload_router, analysis_router, chat_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -46,6 +46,7 @@ app.include_router(cases_router)
 app.include_router(search_router)
 app.include_router(upload_router)
 app.include_router(analysis_router)
+app.include_router(chat_router)
 
 upload_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
 os.makedirs(upload_dir, exist_ok=True)

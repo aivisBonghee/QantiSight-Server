@@ -1,0 +1,89 @@
+{
+  "servers": [
+    {
+      "name": "서버1 (이미지 원본)",
+      "host": "192.168.1.41",
+      "description": "병리 슬라이드 SVS 원본 이미지 저장소",
+      "paths": [
+        {
+          "path": "/mnt/data/pathology/breast/",
+          "description": "유방 조직 슬라이드 (HE, HER2, ER, PR, KI67)",
+          "tags": ["breast", "유방", "HE", "HER2", "ER", "PR", "KI67", "IHC"]
+        },
+        {
+          "path": "/mnt/data/pathology/stomach/",
+          "description": "위 조직 슬라이드 (HE)",
+          "tags": ["stomach", "위", "HE", "gastric"]
+        },
+        {
+          "path": "/mnt/data/pathology/colon/",
+          "description": "대장 조직 슬라이드",
+          "tags": ["colon", "대장", "HE"]
+        }
+      ]
+    },
+    {
+      "name": "서버2 (분석 결과)",
+      "host": "192.168.1.42",
+      "description": "AI 분석 결과 및 모델 가중치 저장소",
+      "paths": [
+        {
+          "path": "/mnt/results/qc-analysis/",
+          "description": "QC 분석 결과 파일 (JSON, CSV)",
+          "tags": ["QC", "analysis", "결과", "분석"]
+        },
+        {
+          "path": "/mnt/models/",
+          "description": "AI 모델 가중치 파일 (Organ Classifier, Dome-DETR)",
+          "tags": ["model", "weights", "모델", "가중치", "UNI", "Dome-DETR"]
+        }
+      ]
+    },
+    {
+      "name": "서버3 (QantiSight)",
+      "host": "192.168.1.43",
+      "description": "QantiSight 시스템 운영 서버 (Docker)",
+      "paths": [
+        {
+          "path": "~/pathoaid/qantisight/uploads/",
+          "description": "업로드된 슬라이드 파일",
+          "tags": ["upload", "업로드", "SVS"]
+        },
+        {
+          "path": "~/pathoaid/qantisight/",
+          "description": "QantiSight 백엔드/프론트엔드 소스코드",
+          "tags": ["source", "소스코드", "QantiSight"]
+        }
+      ]
+    },
+    {
+      "name": "서버4 (백업)",
+      "host": "192.168.1.44",
+      "description": "병리 데이터 백업 서버",
+      "paths": [
+        {
+          "path": "/mnt/backup/pathology/",
+          "description": "병리 슬라이드 백업 데이터",
+          "tags": ["backup", "백업", "pathology"]
+        }
+      ]
+    },
+    {
+      "name": "NAS (공유 스토리지)",
+      "host": "192.168.0.62",
+      "description": "CIFS 마운트 공유 스토리지 (git-data)",
+      "paths": [
+        {
+          "path": "/mnt/nas2/Dome-DETR/",
+          "description": "Dome-DETR 모델 가중치",
+          "tags": ["Dome-DETR", "model", "weights", "NAS"]
+        },
+        {
+          "path": "/mnt/nas2/datasets/",
+          "description": "학습용 데이터셋",
+          "tags": ["dataset", "데이터셋", "training", "학습"]
+        }
+      ]
+    }
+  ]
+}
