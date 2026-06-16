@@ -101,10 +101,18 @@ def query_qc_summary(db: Session, **kwargs):
     organ_match_count = done.filter(QcResult.organ_match == True).count()
 
     stain_correct = 0
+    stain_mismatch = 0
     if done_count > 0:
         rows = done.with_entities(Case.stain_type, QcResult.stain_classification).all()
-        stain_correct = sum(1 for r in rows if _stain_matches_py(r[0], r[1]))
+        for r in rows:
+            if not r[1] or r[1] == "uncertain":
+                continue
+            if _stain_matches_py(r[0], r[1]):
+                stain_correct += 1
+            else:
+                stain_mismatch += 1
 
+    stain_evaluated = stain_correct + stain_mismatch
     avg_qc = done.with_entities(func.avg(QcResult.overall_qc_score)).scalar() or 0
 
     low = done.filter(QcResult.lesion_volume == "Low").count()
@@ -121,8 +129,8 @@ def query_qc_summary(db: Session, **kwargs):
         "doneCases": done_count,
         "organMatchRate": round(organ_match_count / done_count * 100, 1) if done_count else 0,
         "organMismatchCount": done_count - organ_match_count,
-        "stainAccuracy": round(stain_correct / done_count * 100, 1) if done_count else 0,
-        "stainMismatchCount": done_count - stain_correct,
+        "stainAccuracy": round(stain_correct / stain_evaluated * 100, 1) if stain_evaluated else 0,
+        "stainMismatchCount": stain_mismatch,
         "avgQcScore": round(float(avg_qc), 1),
         "lesionDistribution": {"low": low, "moderate": moderate, "high": high},
         "focusIssueCount": focus_issue,
@@ -148,7 +156,8 @@ def search_cases(db: Session, **kwargs):
         else:
             query = query.filter(~_stain_match_expr)
 
-    limit = int(kwargs.get("limit", 10))
+    total_count = query.count()
+    limit = int(kwargs.get("limit", 20))
     cases = query.order_by(Case.created_at.desc()).limit(limit).all()
 
     results = []
@@ -172,7 +181,7 @@ def search_cases(db: Session, **kwargs):
             })
         results.append(item)
 
-    return {"count": len(results), "cases": results}
+    return {"total": total_count, "returned": len(results), "cases": results}
 
 
 def get_case_detail(db: Session, **kwargs):
