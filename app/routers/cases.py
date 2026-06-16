@@ -54,6 +54,8 @@ def _apply_filters(query, params: dict):
         query = query.filter(Case.hospital_code == params["hospital_code"])
     if params.get("server_location"):
         query = query.filter(Case.server_location == params["server_location"])
+    if params.get("pathologist"):
+        query = query.filter(Case.pathologist == params["pathologist"])
 
     needs_qc_join = (
         params.get("organ_match") is not None
@@ -101,6 +103,7 @@ def list_cases(
     status: Optional[str] = None,
     hospital_code: Optional[str] = None,
     server_location: Optional[str] = None,
+    pathologist: Optional[str] = None,
     organ_match: Optional[str] = None,
     stain_match: Optional[str] = None,
     control_tissue: Optional[str] = None,
@@ -113,7 +116,8 @@ def list_cases(
     params = {
         "search": search, "organ": organ, "stain_type": stain_type,
         "status": status, "hospital_code": hospital_code,
-        "server_location": server_location, "organ_match": organ_match,
+        "server_location": server_location, "pathologist": pathologist,
+        "organ_match": organ_match,
         "stain_match": stain_match, "control_tissue": control_tissue, "qc_grade": qc_grade,
         "has_issue": has_issue,
     }
@@ -144,6 +148,7 @@ def get_summary(
     status: Optional[str] = None,
     hospital_code: Optional[str] = None,
     server_location: Optional[str] = None,
+    pathologist: Optional[str] = None,
     organ_match: Optional[str] = None,
     stain_match: Optional[str] = None,
     control_tissue: Optional[str] = None,
@@ -154,7 +159,8 @@ def get_summary(
     params = {
         "search": search, "organ": organ, "stain_type": stain_type,
         "status": status, "hospital_code": hospital_code,
-        "server_location": server_location, "organ_match": organ_match,
+        "server_location": server_location, "pathologist": pathologist,
+        "organ_match": organ_match,
         "stain_match": stain_match, "control_tissue": control_tissue, "qc_grade": qc_grade,
         "has_issue": has_issue,
     }

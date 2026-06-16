@@ -28,6 +28,7 @@ class Case(Base):
     ihc_markers = Column(String(300))
     molecular_test = Column(String(200))
     clinical_info = Column(Text)
+    pathologist = Column(String(50))
     analysis_progress = Column(Integer, default=0)
     analysis_step = Column(String(50))
     analysis_task_id = Column(String(100))
