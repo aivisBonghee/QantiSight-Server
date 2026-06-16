@@ -103,9 +103,8 @@ def chat(req: ChatRequest, db: Session = Depends(get_db)):
                 )
 
             text = response.text
-            chunk_size = 30
-            for i in range(0, len(text), chunk_size):
-                yield f"data: {json.dumps({'type': 'text', 'content': text[i:i + chunk_size]}, ensure_ascii=False)}\n\n"
+            for word in text.split(" "):
+                yield f"data: {json.dumps({'type': 'text', 'content': word + ' '}, ensure_ascii=False)}\n\n"
 
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
