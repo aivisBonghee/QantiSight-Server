@@ -35,6 +35,7 @@ async def upload_slide(
     organ: str = Form(""),
     stain_type: str = Form("HE"),
     diagnosis: Optional[str] = Form(None),
+    pathologist: str = Form(""),
     server_location: str = Form("server-1"),
     db: Session = Depends(get_db),
 ):
@@ -80,6 +81,7 @@ async def upload_slide(
             organ=organ,
             stain_type=stain_type,
             diagnosis=diagnosis,
+            pathologist=pathologist or None,
             status="PROCESSING",
             server_location=server_location,
             image_path=image_url,
