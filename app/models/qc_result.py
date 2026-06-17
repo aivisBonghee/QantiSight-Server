@@ -33,6 +33,7 @@ class QcResult(Base):
     blur_regions = Column(String)
     artifact_regions = Column(String)
     tissue_region = Column(String)
+    heatmap_path = Column(String)
 
     analyzed_at = Column(DateTime, server_default=func.now())
 

@@ -33,6 +33,7 @@ class QcResultResponse(BaseModel):
     lesion_area_ratio: Optional[float]
     lesion_volume: Optional[str]
     lesion_detail: Optional[str] = None
+    heatmap_path: Optional[str] = None
     control_tissue_present: Optional[bool]
     control_tissue_confidence: Optional[float]
     analyzed_at: Optional[datetime]

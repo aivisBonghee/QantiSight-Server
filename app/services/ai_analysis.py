@@ -107,6 +107,17 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
         if lesion_detail and lesion_detail.get("tissue_area_mm2"):
             tissue_coverage = min(lesion_detail["tissue_area_mm2"] / 10.0, 100.0)
 
+        _update_progress(db, case_id, 85, "히트맵 생성 중")
+
+        heatmap_filename = None
+        try:
+            from app.services.heatmap import find_and_generate_heatmap
+            import os
+            uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads"))
+            heatmap_filename = find_and_generate_heatmap(filename, case_id, uploads_dir)
+        except Exception as e:
+            logger.warning(f"Heatmap generation skipped for {case_id}: {e}")
+
         _save_qc_results(db, case_id, {
             "organ_match": organ_match,
             "detected_organ": detected_organ,
@@ -117,6 +128,7 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
             "lesion_volume": lesion_volume,
             "tissue_coverage": tissue_coverage,
             "lesion_detail": lesion_detail,
+            "heatmap_path": f"/uploads/{heatmap_filename}" if heatmap_filename else None,
         })
 
     except httpx.ConnectError:
@@ -162,6 +174,7 @@ def _save_qc_results(db, case_id: str, data: dict):
         blur_regions=json.dumps(data["blur_regions"]) if data.get("blur_regions") else None,
         artifact_regions=json.dumps(data["artifact_regions"]) if data.get("artifact_regions") else None,
         tissue_region=json.dumps(data["tissue_region"]) if data.get("tissue_region") else None,
+        heatmap_path=data.get("heatmap_path"),
     )
     db.add(qc)
 
