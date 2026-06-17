@@ -70,8 +70,8 @@ def _apply_filters(query, params: dict):
             query = query.filter(or_(
                 QcResult.organ_match == False,
                 ~_stain_match_expr,
-                QcResult.control_tissue_present == False,
-                QcResult.overall_qc_score < 60,
+                QcResult.overall_qc_score == None,
+                QcResult.overall_qc_score <= 0,
             ))
         if params.get("organ_match") is not None:
             query = query.filter(QcResult.organ_match == (params["organ_match"] == "match"))
