@@ -43,9 +43,14 @@ def generate_heatmap_from_json(json_path: str, output_path: str) -> bool:
     bin_w = slide_w / grid_w
     bin_h = slide_h / grid_h
 
+    tumor_anns = [a for a in annotations if not a.get("was_nonT", True)]
+    if not tumor_anns:
+        logger.info(f"No tumor cells found in {json_path}")
+        return False
+
     density = [[0] * grid_w for _ in range(grid_h)]
 
-    for ann in annotations:
+    for ann in tumor_anns:
         x, y, w, h = ann["bbox"]
         cx, cy = x + w / 2, y + h / 2
         gx = min(int(cx / bin_w), grid_w - 1)
