@@ -29,11 +29,19 @@ def generate_heatmap_from_json(json_path: str, output_path: str) -> bool:
     with open(json_path) as f:
         data = json.load(f)
 
-    img_info = data["images"][0]
-    slide_w = img_info["width"]
-    slide_h = img_info["height"]
-    annotations = data.get("annotations", [])
+    images = data.get("images")
+    if not images:
+        logger.warning(f"No 'images' key in {json_path}")
+        return False
 
+    img_info = images[0]
+    slide_w = img_info.get("width", 0)
+    slide_h = img_info.get("height", 0)
+    if slide_w <= 0 or slide_h <= 0:
+        logger.warning(f"Invalid slide dimensions in {json_path}: {slide_w}x{slide_h}")
+        return False
+
+    annotations = data.get("annotations", [])
     if not annotations:
         return False
 
@@ -43,7 +51,7 @@ def generate_heatmap_from_json(json_path: str, output_path: str) -> bool:
     bin_w = slide_w / grid_w
     bin_h = slide_h / grid_h
 
-    tumor_anns = [a for a in annotations if not a.get("was_nonT", True)]
+    tumor_anns = [a for a in annotations if "bbox" in a and not a.get("was_nonT", True)]
     if not tumor_anns:
         logger.info(f"No tumor cells found in {json_path}")
         return False
@@ -75,7 +83,8 @@ def generate_heatmap_from_json(json_path: str, output_path: str) -> bool:
 
     thumb_w = 512
     thumb_h = max(1, int(thumb_w * aspect))
-    img = img.resize((thumb_w, thumb_h), Image.BILINEAR)
+    resample = getattr(Image, "Resampling", Image).BILINEAR
+    img = img.resize((thumb_w, thumb_h), resample)
     img.save(output_path, "PNG")
     return True
 

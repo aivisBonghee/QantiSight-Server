@@ -70,6 +70,7 @@ class CaseResponse(BaseModel):
     organ: str
     stain_type: str
     diagnosis: Optional[str]
+    pathologist: Optional[str] = None
     status: str
     server_location: Optional[str]
     image_path: Optional[str]

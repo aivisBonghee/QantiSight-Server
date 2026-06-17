@@ -31,8 +31,9 @@ try:
                 if col_name not in existing:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}"))
         conn.commit()
-except Exception:
-    pass
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning(f"Auto-migration skipped: {e}")
 
 app = FastAPI(title="QantiSight API", version="1.0.0")
 

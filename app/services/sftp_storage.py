@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Optional
+from typing import Optional, Tuple
 
 import paramiko
 
@@ -9,7 +9,7 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-def _get_sftp_client() -> tuple[paramiko.SSHClient, paramiko.SFTPClient]:
+def _get_sftp_client() -> Tuple[paramiko.SSHClient, paramiko.SFTPClient]:
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 

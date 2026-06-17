@@ -1,7 +1,7 @@
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy import func, and_, or_, case as sql_case
@@ -65,14 +65,17 @@ def _apply_filters(query, params: dict):
         or params.get("has_issue") is not None
     )
     if needs_qc_join:
-        query = query.join(QcResult)
         if params.get("has_issue"):
+            query = query.outerjoin(QcResult)
             query = query.filter(or_(
+                QcResult.id == None,
                 QcResult.organ_match == False,
                 ~_stain_match_expr,
                 QcResult.overall_qc_score == None,
                 QcResult.overall_qc_score <= 0,
             ))
+        else:
+            query = query.join(QcResult)
         if params.get("organ_match") is not None:
             query = query.filter(QcResult.organ_match == (params["organ_match"] == "match"))
         if params.get("stain_match") is not None:
@@ -223,7 +226,7 @@ def get_case(case_id: str, db: Session = Depends(get_db)):
     return case
 
 
-@router.get("/{case_id}/comments", response_model=list[CommentResponse])
+@router.get("/{case_id}/comments", response_model=List[CommentResponse])
 def list_comments(case_id: str, db: Session = Depends(get_db)):
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
