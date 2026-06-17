@@ -2,6 +2,7 @@ import json
 import glob
 import logging
 from pathlib import Path
+from typing import Optional, Tuple
 
 from PIL import Image
 
@@ -12,7 +13,7 @@ GRID_WIDTH = 256
 MIN_DENSITY_THRESHOLD = 0.02
 
 
-def _jet_color(v: float) -> tuple[int, int, int]:
+def _jet_color(v: float) -> Tuple[int, int, int]:
     if v < 0.25:
         r, g, b = 0, int(255 * v * 4), 255
     elif v < 0.5:
@@ -74,7 +75,7 @@ def generate_heatmap_from_json(json_path: str, output_path: str) -> bool:
     return True
 
 
-def find_and_generate_heatmap(filename: str, case_id: str, uploads_dir: str) -> str | None:
+def find_and_generate_heatmap(filename: str, case_id: str, uploads_dir: str) -> Optional[str]:
     pattern = f"{MODEL_TMP_DIR}/lesion_*/{filename}*.json"
     matches = glob.glob(pattern)
 
