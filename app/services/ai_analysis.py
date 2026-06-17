@@ -76,7 +76,7 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
 
         resp = httpx.post(
             f"{settings.ai_model_url}/analyze",
-            json={"path": image_path, "detail": True},
+            json={"path": image_path, "detail": False},
             timeout=PREDICT_TIMEOUT,
         )
         resp.raise_for_status()
