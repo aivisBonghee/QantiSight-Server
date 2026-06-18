@@ -103,6 +103,11 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
 
         lesion_volume = _classify_lesion_volume(tumor_pct) if tumor_pct else None
 
+        ic_status = data.get("internal_control", "n/a")
+        ic_pieces = data.get("control_pieces", [])
+        ic_present = True if ic_status == "present" else (False if ic_status == "absent" else None)
+        ic_confidence = max((p.get("p", 0) for p in ic_pieces), default=None) if ic_pieces else None
+
         tissue_coverage = None
         if lesion_detail and lesion_detail.get("tissue_area_mm2"):
             tissue_coverage = min(lesion_detail["tissue_area_mm2"] / 10.0, 100.0)
@@ -129,6 +134,10 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
             "tissue_coverage": tissue_coverage,
             "lesion_detail": lesion_detail,
             "heatmap_path": f"/uploads/{heatmap_filename}" if heatmap_filename else None,
+            "control_tissue_present": ic_present,
+            "control_tissue_confidence": ic_confidence,
+            "control_tissue_status": ic_status,
+            "control_pieces": ic_pieces,
         })
 
     except httpx.ConnectError:
@@ -171,6 +180,8 @@ def _save_qc_results(db, case_id: str, data: dict):
         lesion_detail=json.dumps(data["lesion_detail"]) if data.get("lesion_detail") else None,
         control_tissue_present=data.get("control_tissue_present"),
         control_tissue_confidence=data.get("control_tissue_confidence"),
+        control_tissue_status=data.get("control_tissue_status"),
+        control_pieces=json.dumps(data["control_pieces"]) if data.get("control_pieces") else None,
         blur_regions=json.dumps(data["blur_regions"]) if data.get("blur_regions") else None,
         artifact_regions=json.dumps(data["artifact_regions"]) if data.get("artifact_regions") else None,
         tissue_region=json.dumps(data["tissue_region"]) if data.get("tissue_region") else None,

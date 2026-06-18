@@ -36,6 +36,8 @@ class QcResultResponse(BaseModel):
     heatmap_path: Optional[str] = None
     control_tissue_present: Optional[bool]
     control_tissue_confidence: Optional[float]
+    control_tissue_status: Optional[str] = None
+    control_pieces: Optional[str] = None
     analyzed_at: Optional[datetime]
 
     class Config:

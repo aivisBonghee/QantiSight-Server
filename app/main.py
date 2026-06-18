@@ -22,6 +22,8 @@ _AUTO_MIGRATE = {
     "qc_results": [
         ("lesion_detail", "TEXT"),
         ("heatmap_path", "VARCHAR(255)"),
+        ("control_tissue_status", "VARCHAR(20)"),
+        ("control_pieces", "TEXT"),
     ],
 }
 try:

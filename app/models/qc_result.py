@@ -27,6 +27,8 @@ class QcResult(Base):
 
     control_tissue_present = Column(Boolean)
     control_tissue_confidence = Column(Float)
+    control_tissue_status = Column(String(20))
+    control_pieces = Column(String)
 
     lesion_detail = Column(String)
 

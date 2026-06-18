@@ -240,6 +240,7 @@ def get_case_detail(db: Session, **kwargs):
             "focus_score": qr.focus_score,
             "tissue_coverage": qr.tissue_coverage,
             "control_tissue_present": qr.control_tissue_present,
+            "control_tissue_status": qr.control_tissue_status,
         }
         if qr.lesion_detail:
             try:
