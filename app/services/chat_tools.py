@@ -42,6 +42,10 @@ TOOL_DECLARATIONS = [
                     "type": "string",
                     "description": "염색 일치 필터 (match, mismatch)",
                 },
+                "has_issue": {
+                    "type": "boolean",
+                    "description": "부적합 케이스만 필터링 (장기 불일치, 염색 불일치, QC점수 0 또는 미산출 중 하나라도 해당)",
+                },
                 "limit": {
                     "type": "integer",
                     "description": "반환할 최대 케이스 수 (기본 10)",
@@ -124,6 +128,15 @@ def query_qc_summary(db: Session, **kwargs):
     ctrl_total = done.filter(QcResult.control_tissue_present.isnot(None)).count()
     ctrl_present = done.filter(QcResult.control_tissue_present == True).count()
 
+    issue_query = db.query(Case).outerjoin(QcResult).filter(or_(
+        QcResult.id == None,
+        QcResult.organ_match == False,
+        ~_stain_match_expr,
+        QcResult.overall_qc_score == None,
+        QcResult.overall_qc_score <= 0,
+    ))
+    issue_count = issue_query.count()
+
     return {
         "totalCases": total,
         "doneCases": done_count,
@@ -136,6 +149,7 @@ def query_qc_summary(db: Session, **kwargs):
         "focusIssueCount": focus_issue,
         "controlTissueRate": round(ctrl_present / ctrl_total * 100, 1) if ctrl_total else 0,
         "controlTissueMissingCount": ctrl_total - ctrl_present,
+        "issueCount": issue_count,
     }
 
 
@@ -155,6 +169,14 @@ def search_cases(db: Session, **kwargs):
             query = query.filter(_stain_match_expr)
         else:
             query = query.filter(~_stain_match_expr)
+    if kwargs.get("has_issue"):
+        query = query.filter(or_(
+            QcResult.id == None,
+            QcResult.organ_match == False,
+            ~_stain_match_expr,
+            QcResult.overall_qc_score == None,
+            QcResult.overall_qc_score <= 0,
+        ))
 
     total_count = query.count()
     limit = int(kwargs.get("limit", 20))

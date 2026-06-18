@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 import google.generativeai as genai
 from fastapi import APIRouter, Depends
@@ -43,7 +44,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    history: list[ChatMessage] = []
+    history: List[ChatMessage] = []
 
 
 @router.post("")
