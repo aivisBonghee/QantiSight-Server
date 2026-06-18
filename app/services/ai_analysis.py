@@ -104,9 +104,30 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
         lesion_volume = _classify_lesion_volume(tumor_pct) if tumor_pct else None
 
         ic_status = data.get("internal_control", "n/a")
-        ic_pieces = data.get("control_pieces", [])
+        ic_pieces_raw = data.get("control_pieces", [])
         ic_present = True if ic_status == "present" else (False if ic_status == "absent" else None)
-        ic_confidence = max((p.get("p", 0) for p in ic_pieces), default=None) if ic_pieces else None
+        ic_confidence = max((p.get("p", 0) for p in ic_pieces_raw), default=None) if ic_pieces_raw else None
+
+        ic_pieces = []
+        if ic_pieces_raw:
+            try:
+                import openslide
+                slide_path = os.path.join(
+                    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads")),
+                    filename,
+                )
+                with openslide.OpenSlide(slide_path) as s:
+                    sw, sh = s.dimensions
+                for p in ic_pieces_raw:
+                    x0, y0, x1, y1 = p["bbox"]
+                    ic_pieces.append({
+                        "bbox_pct": [round(x0 / sw, 4), round(y0 / sh, 4),
+                                     round(x1 / sw, 4), round(y1 / sh, 4)],
+                        "p": p["p"],
+                    })
+            except Exception as e:
+                logger.warning(f"Control piece normalization failed: {e}")
+                ic_pieces = ic_pieces_raw
 
         tissue_coverage = None
         if lesion_detail and lesion_detail.get("tissue_area_mm2"):
