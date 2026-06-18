@@ -13,6 +13,8 @@ class Case(Base):
     hospital_code = Column(String(10), nullable=False)
     patient_id = Column(String(30), nullable=False)
     patient_name = Column(String(50), nullable=False)
+    patient_age = Column(Integer)
+    patient_gender = Column(String(5))
     exam_no = Column(String(30), nullable=False)
     exam_date = Column(String(10), nullable=False)
     organ = Column(String(20), nullable=False)

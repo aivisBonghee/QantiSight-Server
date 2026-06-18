@@ -65,6 +65,8 @@ class CaseResponse(BaseModel):
     hospital_code: str
     patient_id: str
     patient_name: str
+    patient_age: Optional[int] = None
+    patient_gender: Optional[str] = None
     exam_no: str
     exam_date: str
     organ: str

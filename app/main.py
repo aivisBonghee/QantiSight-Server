@@ -15,6 +15,8 @@ _AUTO_MIGRATE = {
         ("analysis_progress", "INTEGER DEFAULT 0"),
         ("analysis_step", "VARCHAR(50)"),
         ("analysis_task_id", "VARCHAR(100)"),
+        ("patient_age", "INTEGER"),
+        ("patient_gender", "VARCHAR(5)"),
         ("pathologist", "VARCHAR(50)"),
     ],
     "qc_results": [
