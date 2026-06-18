@@ -9,3 +9,4 @@ uploads/
 service-account*.json
 credentials*.json
 .DS_Store
+data/*.tsv

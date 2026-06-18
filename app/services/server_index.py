@@ -1,63 +1,123 @@
-import json
+import logging
 import os
+from typing import Dict, List, Optional
 
-_SERVER_MAP = None
+logger = logging.getLogger(__name__)
+
+_INDEX: Optional[List[Dict]] = None
+
+INDEX_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data")
+
+SERVER_CONFIGS = {
+    "file_index_200T.tsv": {
+        "name": "200T 서버",
+        "host": "192.168.1.10",
+        "description": "병리 슬라이드 원본 저장소 (230TB, /mnt)",
+    },
+    "file_index_server05.tsv": {
+        "name": "서버5",
+        "host": "192.168.1.15",
+        "description": "병리 슬라이드 저장소 (14T-1~4 디스크)",
+    },
+}
 
 
-def _load_server_map():
-    global _SERVER_MAP
-    if _SERVER_MAP is not None:
-        return _SERVER_MAP
+def _load_index():
+    global _INDEX
+    if _INDEX is not None:
+        return _INDEX
 
-    config_path = os.path.join(
-        os.path.dirname(__file__), "..", "..", "config", "server_map.json"
-    )
-    try:
-        with open(config_path, "r", encoding="utf-8") as f:
-            _SERVER_MAP = json.load(f)
-    except FileNotFoundError:
-        _SERVER_MAP = {"servers": []}
+    _INDEX = []
+    for filename, server_info in SERVER_CONFIGS.items():
+        filepath = os.path.join(INDEX_DIR, filename)
+        if not os.path.exists(filepath):
+            logger.warning("Index file not found: %s", filepath)
+            continue
 
-    return _SERVER_MAP
+        count = 0
+        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                path = line.strip()
+                if not path:
+                    continue
+                basename = os.path.basename(path)
+                name_no_ext = os.path.splitext(basename)[0]
+                ext = os.path.splitext(basename)[1].lower()
+                _INDEX.append({
+                    "server": server_info["name"],
+                    "host": server_info["host"],
+                    "path": path,
+                    "filename": basename,
+                    "name_lower": name_no_ext.lower(),
+                    "ext": ext,
+                })
+                count += 1
+
+        logger.info("Loaded %d entries from %s", count, filename)
+
+    return _INDEX
 
 
-def search_servers(query: str = "", organ: str = None, stain: str = None):
-    data = _load_server_map()
-    results = []
+def search_servers(
+    query: str = "",
+    organ: Optional[str] = None,
+    stain: Optional[str] = None,
+    limit: int = 30,
+):
+    index = _load_index()
 
-    query_lower = query.lower() if query else ""
-    organ_lower = organ.lower() if organ else ""
-    stain_lower = stain.lower() if stain else ""
-
-    for server in data.get("servers", []):
-        matching_paths = []
-        for path_info in server.get("paths", []):
-            desc = path_info.get("description", "").lower()
-            tags = [t.lower() for t in path_info.get("tags", [])]
-            path = path_info.get("path", "").lower()
-            searchable = [desc, path] + tags
-
-            if query_lower and not any(query_lower in s for s in searchable):
-                continue
-            if organ_lower and not any(organ_lower in s for s in searchable):
-                continue
-            if stain_lower and not any(stain_lower in s for s in searchable):
-                continue
-
-            matching_paths.append(path_info)
-
-        if matching_paths:
-            results.append({
-                "name": server["name"],
-                "host": server["host"],
-                "description": server.get("description", ""),
-                "matching_paths": matching_paths,
-            })
-
-    if not results:
+    if not index:
         return {
-            "message": "검색 조건에 맞는 서버 데이터를 찾을 수 없습니다.",
-            "servers": [],
+            "message": "서버 파일 인덱스가 아직 구축되지 않았습니다.",
+            "total": 0,
+            "results": [],
         }
 
-    return {"servers": results}
+    keywords = []
+    if query:
+        keywords.extend(query.lower().split())
+    if organ:
+        keywords.append(organ.lower())
+    if stain:
+        keywords.append(stain.lower())
+
+    if not keywords:
+        server_stats = {}
+        for entry in index:
+            s = entry["server"]
+            server_stats[s] = server_stats.get(s, 0) + 1
+        return {
+            "message": "검색어를 입력해주세요.",
+            "total_indexed": len(index),
+            "servers": [
+                {"name": k, "file_count": v} for k, v in server_stats.items()
+            ],
+        }
+
+    matches = []
+    for entry in index:
+        searchable = entry["name_lower"] + " " + entry["path"].lower()
+        if all(kw in searchable for kw in keywords):
+            matches.append(entry)
+
+    results = [
+        {
+            "server": m["server"],
+            "host": m["host"],
+            "path": m["path"],
+            "filename": m["filename"],
+        }
+        for m in matches[:limit]
+    ]
+
+    server_counts = {}
+    for m in matches:
+        s = m["server"]
+        server_counts[s] = server_counts.get(s, 0) + 1
+
+    return {
+        "total": len(matches),
+        "returned": len(results),
+        "by_server": server_counts,
+        "results": results,
+    }
