@@ -68,6 +68,14 @@ def _run_analysis_pipeline(case_id: str, local_path: str, filename: str, organ: 
             _run_sftp_transfer(db, case_id, local_path, filename)
     except Exception as e:
         logger.error(f"Analysis pipeline failed for case {case_id}: {e}")
+        try:
+            case = db.query(Case).filter(Case.id == case_id).first()
+            if case and case.status == "PROCESSING":
+                case.status = "ERROR"
+                case.analysis_step = str(e)[:50]
+            db.commit()
+        except Exception:
+            pass
     finally:
         db.close()
 
