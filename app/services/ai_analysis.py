@@ -2,6 +2,7 @@ import uuid
 import json
 import logging
 import threading
+from queue import Queue
 
 import httpx
 
@@ -12,18 +13,38 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-PREDICT_TIMEOUT = 600.0
+PREDICT_TIMEOUT = 3600.0
 
 IHC_STAINS = {"HER2", "ER", "PR", "KI67"}
 
+_analysis_queue = Queue()
+_worker_started = False
+_worker_lock = threading.Lock()
+
+
+def _analysis_worker():
+    while True:
+        args = _analysis_queue.get()
+        try:
+            _run_analysis_pipeline(*args)
+        except Exception as e:
+            logger.error(f"Analysis worker error: {e}")
+        finally:
+            _analysis_queue.task_done()
+
+
+def _ensure_worker():
+    global _worker_started
+    with _worker_lock:
+        if not _worker_started:
+            t = threading.Thread(target=_analysis_worker, daemon=True)
+            t.start()
+            _worker_started = True
+
 
 def start_analysis_background(case_id: str, local_path: str, filename: str, organ: str, stain_type: str):
-    thread = threading.Thread(
-        target=_run_analysis_pipeline,
-        args=(case_id, local_path, filename, organ, stain_type),
-        daemon=True,
-    )
-    thread.start()
+    _ensure_worker()
+    _analysis_queue.put((case_id, local_path, filename, organ, stain_type))
 
 
 def _update_progress(db, case_id: str, progress: int, step: str):
