@@ -216,8 +216,8 @@ def get_summary(
     avg_qc = done.with_entities(func.avg(QcResult.overall_qc_score)).scalar() or 0
     focus_issue = done.filter(QcResult.focus_score < 60).count()
 
-    ctrl_total = done.filter(QcResult.control_tissue_present.isnot(None)).count()
-    ctrl_present = done.filter(QcResult.control_tissue_present == True).count()
+    ctrl_total = done.filter(QcResult.control_tissue_status.in_(["present", "absent"])).count()
+    ctrl_present = done.filter(QcResult.control_tissue_status == "present").count()
 
     return {
         "totalCases": total,
