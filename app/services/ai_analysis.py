@@ -61,6 +61,11 @@ def _update_progress(db, case_id: str, progress: int, step: str):
 def _run_analysis_pipeline(case_id: str, local_path: str, filename: str, organ: str, stain_type: str):
     db = SessionLocal()
     try:
+        case = db.query(Case).filter(Case.id == case_id).first()
+        if case:
+            case.status = "PROCESSING"
+            db.commit()
+
         _run_ai_analysis(db, case_id, filename, organ, stain_type)
 
         from app.services.sftp_storage import upload_to_data_server, is_data_server_configured

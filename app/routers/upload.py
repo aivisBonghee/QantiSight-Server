@@ -86,7 +86,7 @@ async def upload_slide(
             patient_age=patient_age,
             patient_gender=patient_gender or None,
             pathologist=pathologist or None,
-            status="PROCESSING",
+            status="WAITING",
             server_location=server_location,
             image_path=image_url,
             thumbnail_path=thumb_url,
