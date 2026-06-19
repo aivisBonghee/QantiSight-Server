@@ -13,11 +13,19 @@ from app.schemas import CaseResponse, CaseListResponse, CaseCreate, CaseConfirmR
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
 
-IHC_STAINS = {"HER2", "ER", "PR", "KI67"}
+IHC_NUCLEAR = {"IHC-ER", "IHC-PR", "IHC-KI67"}
+IHC_MEMBRANE = {"IHC-HER2"}
+IHC_STAINS = IHC_NUCLEAR | IHC_MEMBRANE
+
+STAIN_CATEGORY_MAP = {
+    "IHC-membrane": ["IHC-HER2"],
+    "IHC-nuclear": ["IHC-ER", "IHC-PR", "IHC-KI67"],
+}
 
 _stain_match_expr = or_(
     and_(QcResult.stain_classification == "HE", Case.stain_type == "HE"),
-    and_(QcResult.stain_classification.like("IHC%"), Case.stain_type.in_(list(IHC_STAINS))),
+    and_(QcResult.stain_classification == "IHC-nuclear", Case.stain_type.in_(list(IHC_NUCLEAR))),
+    and_(QcResult.stain_classification == "IHC-membrane", Case.stain_type.in_(list(IHC_MEMBRANE))),
 )
 
 
@@ -26,8 +34,10 @@ def _stain_matches_py(case_stain: str, detected: str) -> bool:
         return False
     if detected == "HE":
         return case_stain == "HE"
-    if detected.startswith("IHC"):
-        return case_stain in IHC_STAINS
+    if detected == "IHC-nuclear":
+        return case_stain in IHC_NUCLEAR
+    if detected == "IHC-membrane":
+        return case_stain in IHC_MEMBRANE
     return detected == case_stain
 
 
@@ -46,7 +56,10 @@ def _apply_filters(query, params: dict):
         query = query.filter(Case.organ.in_(vals)) if len(vals) > 1 else query.filter(Case.organ == vals[0])
     if params.get("stain_type"):
         vals = [v.strip() for v in params["stain_type"].split(",")]
-        query = query.filter(Case.stain_type.in_(vals)) if len(vals) > 1 else query.filter(Case.stain_type == vals[0])
+        expanded = []
+        for v in vals:
+            expanded.extend(STAIN_CATEGORY_MAP.get(v, [v]))
+        query = query.filter(Case.stain_type.in_(expanded))
     if params.get("status"):
         vals = [v.strip() for v in params["status"].split(",")]
         query = query.filter(Case.status.in_(vals)) if len(vals) > 1 else query.filter(Case.status == vals[0])

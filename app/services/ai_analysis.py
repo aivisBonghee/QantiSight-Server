@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 
 PREDICT_TIMEOUT = 3600.0
 
-IHC_STAINS = {"HER2", "ER", "PR", "KI67"}
+IHC_NUCLEAR = {"IHC-ER", "IHC-PR", "IHC-KI67"}
+IHC_MEMBRANE = {"IHC-HER2"}
+IHC_STAINS = IHC_NUCLEAR | IHC_MEMBRANE
 
 _analysis_queue = Queue()
 _worker_started = False
@@ -73,10 +75,12 @@ def _stain_matches(case_stain: str, detected_stain: str) -> bool:
     if detected_stain == "uncertain":
         return False
     if detected_stain == "HE":
-        return case_stain.upper() == "HE"
-    if detected_stain == "IHC":
-        return case_stain.upper() in IHC_STAINS
-    return detected_stain.upper() == case_stain.upper()
+        return case_stain == "HE"
+    if detected_stain == "IHC-nuclear":
+        return case_stain in IHC_NUCLEAR
+    if detected_stain == "IHC-membrane":
+        return case_stain in IHC_MEMBRANE
+    return detected_stain == case_stain
 
 
 def _classify_lesion_volume(tumor_pct: float) -> str:

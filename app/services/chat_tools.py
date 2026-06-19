@@ -5,7 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.models import Case, QcResult
 
-IHC_STAINS = {"HER2", "ER", "PR", "KI67"}
+IHC_NUCLEAR = {"IHC-ER", "IHC-PR", "IHC-KI67"}
+IHC_MEMBRANE = {"IHC-HER2"}
+IHC_STAINS = IHC_NUCLEAR | IHC_MEMBRANE
+
+STAIN_CATEGORY_MAP = {
+    "IHC-membrane": ["IHC-HER2"],
+    "IHC-nuclear": ["IHC-ER", "IHC-PR", "IHC-KI67"],
+}
 
 TOOL_DECLARATIONS = [
     {
@@ -28,7 +35,7 @@ TOOL_DECLARATIONS = [
                 },
                 "stain_type": {
                     "type": "string",
-                    "description": "염색 필터 (HE, HER2, ER, PR, KI67)",
+                    "description": "염색 필터 (HE, IHC-HER2, IHC-ER, IHC-PR, IHC-KI67)",
                 },
                 "status": {
                     "type": "string",
@@ -80,10 +87,8 @@ TOOL_DECLARATIONS = [
 
 _stain_match_expr = or_(
     and_(QcResult.stain_classification == "HE", Case.stain_type == "HE"),
-    and_(
-        QcResult.stain_classification.like("IHC%"),
-        Case.stain_type.in_(list(IHC_STAINS)),
-    ),
+    and_(QcResult.stain_classification == "IHC-nuclear", Case.stain_type.in_(list(IHC_NUCLEAR))),
+    and_(QcResult.stain_classification == "IHC-membrane", Case.stain_type.in_(list(IHC_MEMBRANE))),
 )
 
 
@@ -92,8 +97,10 @@ def _stain_matches_py(case_stain: str, detected: str) -> bool:
         return False
     if detected == "HE":
         return case_stain == "HE"
-    if detected.startswith("IHC"):
-        return case_stain in IHC_STAINS
+    if detected == "IHC-nuclear":
+        return case_stain in IHC_NUCLEAR
+    if detected == "IHC-membrane":
+        return case_stain in IHC_MEMBRANE
     return detected == case_stain
 
 
@@ -159,7 +166,8 @@ def search_cases(db: Session, **kwargs):
     if kwargs.get("organ"):
         query = query.filter(Case.organ == kwargs["organ"])
     if kwargs.get("stain_type"):
-        query = query.filter(Case.stain_type == kwargs["stain_type"])
+        expanded = STAIN_CATEGORY_MAP.get(kwargs["stain_type"], [kwargs["stain_type"]])
+        query = query.filter(Case.stain_type.in_(expanded))
     if kwargs.get("status"):
         query = query.filter(Case.status == kwargs["status"])
     if kwargs.get("organ_match"):

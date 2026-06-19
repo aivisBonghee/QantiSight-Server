@@ -39,6 +39,16 @@ except Exception as e:
     import logging
     logging.getLogger(__name__).warning(f"Auto-migration skipped: {e}")
 
+# stain_type renaming migration
+try:
+    with engine.connect() as conn:
+        for old, new in [("HER2", "IHC-HER2"), ("ER", "IHC-ER"), ("PR", "IHC-PR"), ("KI67", "IHC-KI67")]:
+            conn.execute(text(f"UPDATE cases SET stain_type = '{new}' WHERE stain_type = '{old}'"))
+        conn.commit()
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning(f"Stain rename migration skipped: {e}")
+
 app = FastAPI(title="QantiSight API", version="1.0.0")
 
 app.add_middleware(
