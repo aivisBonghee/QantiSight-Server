@@ -11,7 +11,7 @@ INDEX_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data")
 SERVER_CONFIGS = {
     "file_index_200T.tsv": {
         "name": "200T 서버",
-        "host": "192.168.1.10",
+        "host": "192.168.1.41",
         "description": "병리 슬라이드 원본 저장소 (230TB, /mnt)",
     },
     "file_index_server05.tsv": {
