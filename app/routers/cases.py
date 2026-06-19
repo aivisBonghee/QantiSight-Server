@@ -97,7 +97,14 @@ def _apply_filters(query, params: dict):
             else:
                 query = query.filter(~_stain_match_expr)
         if params.get("control_tissue") is not None:
-            query = query.filter(QcResult.control_tissue_present == (params["control_tissue"] == "present"))
+            if params["control_tissue"] == "present":
+                query = query.filter(QcResult.control_tissue_status == "present")
+            else:
+                query = query.filter(or_(
+                    QcResult.control_tissue_status == "absent",
+                    QcResult.control_tissue_status == None,
+                    QcResult.control_tissue_present == False,
+                ))
         if params.get("qc_grade"):
             g = params["qc_grade"]
             if g == "good":
