@@ -161,13 +161,19 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
 
         _update_progress(db, case_id, 85, "히트맵 생성 중")
 
-        heatmap_filename = None
+        heatmap_result = {"heatmap": None, "cell_ratio": None}
         try:
             from app.services.heatmap import find_and_generate_heatmap
             uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads"))
-            heatmap_filename = find_and_generate_heatmap(filename, case_id, uploads_dir)
+            heatmap_result = find_and_generate_heatmap(filename, case_id, uploads_dir)
         except Exception as e:
             logger.warning(f"Heatmap generation skipped for {case_id}: {e}")
+
+        cell_ratio = heatmap_result.get("cell_ratio")
+        lesion_ratio = cell_ratio if cell_ratio is not None else (round(tumor_pct / 100, 4) if tumor_pct else None)
+        if cell_ratio is not None:
+            lesion_volume = _classify_lesion_volume(cell_ratio * 100)
+        heatmap_filename = heatmap_result.get("heatmap")
 
         _save_qc_results(db, case_id, {
             "organ_match": organ_match,
@@ -175,7 +181,7 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
             "organ_confidence": organ_confidence,
             "stain_classification": stain_classification,
             "stain_confidence": stain_confidence,
-            "lesion_area_ratio": round(tumor_pct / 100, 4) if tumor_pct else None,
+            "lesion_area_ratio": lesion_ratio,
             "lesion_volume": lesion_volume,
             "tissue_coverage": tissue_coverage,
             "lesion_detail": lesion_detail,

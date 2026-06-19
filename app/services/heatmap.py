@@ -89,23 +89,43 @@ def generate_heatmap_from_json(json_path: str, output_path: str) -> bool:
     return True
 
 
-def find_and_generate_heatmap(filename: str, case_id: str, uploads_dir: str) -> Optional[str]:
+def _compute_cell_ratio(json_path: str) -> Optional[float]:
+    try:
+        with open(json_path) as f:
+            data = json.load(f)
+        annotations = data.get("annotations", [])
+        if not annotations:
+            return None
+        total = len([a for a in annotations if "bbox" in a])
+        tumor = len([a for a in annotations if "bbox" in a and not a.get("was_nonT", True)])
+        if total == 0:
+            return None
+        return round(tumor / total, 4)
+    except Exception as e:
+        logger.warning(f"Cell ratio computation failed: {e}")
+        return None
+
+
+def find_and_generate_heatmap(filename: str, case_id: str, uploads_dir: str) -> dict:
+    result = {"heatmap": None, "cell_ratio": None}
     pattern = f"{MODEL_TMP_DIR}/lesion_*/{filename}*.json"
     matches = glob.glob(pattern)
 
     if not matches:
         logger.debug(f"No detection JSON found for {filename}")
-        return None
+        return result
 
     json_path = matches[0]
+    result["cell_ratio"] = _compute_cell_ratio(json_path)
+
     heatmap_filename = f"heatmap_{case_id}.png"
     output_path = str(Path(uploads_dir) / heatmap_filename)
 
     try:
         if generate_heatmap_from_json(json_path, output_path):
             logger.info(f"Heatmap generated: {heatmap_filename}")
-            return heatmap_filename
-        return None
+            result["heatmap"] = heatmap_filename
     except Exception as e:
         logger.error(f"Heatmap generation failed for {case_id}: {e}")
-        return None
+
+    return result
