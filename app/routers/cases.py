@@ -313,6 +313,16 @@ def confirm_case(case_id: str, body: CaseConfirmRequest, db: Session = Depends(g
     return case
 
 
+@router.delete("", status_code=204)
+def delete_cases(ids: List[str] = Query(...), db: Session = Depends(get_db)):
+    db.query(QcResult).filter(QcResult.case_id.in_(ids)).delete(synchronize_session=False)
+    db.query(Comment).filter(Comment.case_id.in_(ids)).delete(synchronize_session=False)
+    deleted = db.query(Case).filter(Case.id.in_(ids)).delete(synchronize_session=False)
+    db.commit()
+    if deleted == 0:
+        raise HTTPException(status_code=404, detail="No cases found")
+
+
 @router.post("", response_model=CaseResponse, status_code=201)
 def create_case(body: CaseCreate, db: Session = Depends(get_db)):
     case = Case(id=str(uuid.uuid4()), **body.model_dump(), status="WAITING")
