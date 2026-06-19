@@ -164,7 +164,6 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
         heatmap_filename = None
         try:
             from app.services.heatmap import find_and_generate_heatmap
-            import os
             uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads"))
             heatmap_filename = find_and_generate_heatmap(filename, case_id, uploads_dir)
         except Exception as e:
