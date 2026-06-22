@@ -111,12 +111,17 @@ def _apply_filters(query, params: dict):
                 ))
         if params.get("qc_grade"):
             g = params["qc_grade"]
-            if g == "good":
-                query = query.filter(QcResult.overall_qc_score >= 80)
-            elif g == "fair":
-                query = query.filter(QcResult.overall_qc_score >= 60, QcResult.overall_qc_score < 80)
-            elif g == "poor":
-                query = query.filter(QcResult.overall_qc_score < 60)
+            t_pass = int(params.get("qc_t_pass", 85))
+            t_cond = int(params.get("qc_t_conditional", 70))
+            t_rescan = int(params.get("qc_t_rescan", 50))
+            if g == "pass":
+                query = query.filter(QcResult.overall_qc_score >= t_pass)
+            elif g == "conditional":
+                query = query.filter(QcResult.overall_qc_score >= t_cond, QcResult.overall_qc_score < t_pass)
+            elif g == "rescan":
+                query = query.filter(QcResult.overall_qc_score >= t_rescan, QcResult.overall_qc_score < t_cond)
+            elif g == "fail":
+                query = query.filter(QcResult.overall_qc_score < t_rescan)
     return query
 
 
@@ -135,6 +140,9 @@ def list_cases(
     stain_match: Optional[str] = None,
     control_tissue: Optional[str] = None,
     qc_grade: Optional[str] = None,
+    qc_t_pass: Optional[int] = None,
+    qc_t_conditional: Optional[int] = None,
+    qc_t_rescan: Optional[int] = None,
     has_issue: Optional[str] = None,
     sort_by: Optional[str] = "created_at",
     sort_dir: Optional[str] = "desc",
@@ -146,6 +154,7 @@ def list_cases(
         "server_location": server_location, "pathologist": pathologist,
         "organ_match": organ_match,
         "stain_match": stain_match, "control_tissue": control_tissue, "qc_grade": qc_grade,
+        "qc_t_pass": qc_t_pass, "qc_t_conditional": qc_t_conditional, "qc_t_rescan": qc_t_rescan,
         "has_issue": has_issue,
     }
     query = db.query(Case).options(joinedload(Case.qc_result), joinedload(Case.comments))
@@ -180,6 +189,9 @@ def get_summary(
     stain_match: Optional[str] = None,
     control_tissue: Optional[str] = None,
     qc_grade: Optional[str] = None,
+    qc_t_pass: Optional[int] = None,
+    qc_t_conditional: Optional[int] = None,
+    qc_t_rescan: Optional[int] = None,
     has_issue: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
@@ -189,6 +201,7 @@ def get_summary(
         "server_location": server_location, "pathologist": pathologist,
         "organ_match": organ_match,
         "stain_match": stain_match, "control_tissue": control_tissue, "qc_grade": qc_grade,
+        "qc_t_pass": qc_t_pass, "qc_t_conditional": qc_t_conditional, "qc_t_rescan": qc_t_rescan,
         "has_issue": has_issue,
     }
     base = db.query(Case)
