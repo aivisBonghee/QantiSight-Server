@@ -321,6 +321,13 @@ def update_case(case_id: str, body: CaseUpdate, db: Session = Depends(get_db)):
     updates = body.model_dump(exclude_unset=True)
     for field, value in updates.items():
         setattr(case, field, value)
+    if case.qc_result and ("organ" in updates or "stain_type" in updates):
+        qr = case.qc_result
+        if "organ" in updates and qr.detected_organ:
+            qr.organ_match = (
+                qr.detected_organ != "uncertain"
+                and qr.detected_organ.lower() == case.organ.lower()
+            )
     case.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(case)
