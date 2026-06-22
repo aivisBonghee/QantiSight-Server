@@ -84,8 +84,12 @@ def _apply_filters(query, params: dict):
                 QcResult.id == None,
                 QcResult.organ_match == False,
                 ~_stain_match_expr,
-                QcResult.overall_qc_score == None,
-                QcResult.overall_qc_score <= 0,
+                and_(QcResult.overall_qc_score.isnot(None), QcResult.overall_qc_score <= 0),
+                and_(
+                    Case.stain_type.in_(list(IHC_STAINS)),
+                    QcResult.control_tissue_status.isnot(None),
+                    QcResult.control_tissue_status.notin_(["present", "n/a"]),
+                ),
             ))
         else:
             query = query.join(QcResult)
