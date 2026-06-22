@@ -85,5 +85,29 @@
         }
       ]
     }
+  ],
+  "datasets": [
+    {
+      "organ": "Gastric",
+      "provider": "신촌세브란스",
+      "quantity": 211,
+      "biomarkers": ["HER2"],
+      "receipt_dates": ["2025-09-29", "2025-12-30"],
+      "receipt_note": "1차 250929, 2차 251230",
+      "note": "HE paired",
+      "location": "200T /mnt/DATA_AI/DATA_SSV",
+      "tags": ["gastric", "위", "세브란스", "HER2", "HE", "SSV"]
+    },
+    {
+      "organ": "Bladder",
+      "provider": "신촌세브란스",
+      "quantity": 35,
+      "biomarkers": ["HER2"],
+      "receipt_dates": ["2025-09-29", "2025-12-30"],
+      "receipt_note": "1차 250929, 2차 251230",
+      "note": "HE paired",
+      "location": "200T /mnt/DATA_AI/DATA_SSV",
+      "tags": ["bladder", "방광", "세브란스", "HER2", "HE", "SSV"]
+    }
   ]
 }

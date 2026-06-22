@@ -83,6 +83,16 @@ TOOL_DECLARATIONS = [
             },
         },
     },
+    {
+        "name": "search_datasets",
+        "description": "보유 데이터셋 메타정보를 검색합니다. 장기, 제공기관, 바이오마커, 키워드로 검색합니다. 데이터 출처, 수량, 수령일, 저장 위치, HE paired 여부 등의 정보를 제공합니다.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "검색 키워드 (장기명, 기관명, 바이오마커 등)"},
+            },
+        },
+    },
 ]
 
 _stain_match_expr = or_(
@@ -269,11 +279,44 @@ def find_server_data(db: Session, **kwargs):
     )
 
 
+def search_datasets(db: Session, **kwargs):
+    import os
+    config_path = os.path.join(os.path.dirname(__file__), "..", "..", "config", "server_map.json")
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"error": "데이터셋 정보 파일을 찾을 수 없습니다."}
+
+    datasets = data.get("datasets", [])
+    query = kwargs.get("query", "").lower()
+
+    if not query:
+        return {"total": len(datasets), "datasets": datasets}
+
+    keywords = query.split()
+    results = []
+    for ds in datasets:
+        searchable = " ".join([
+            ds.get("organ", ""),
+            ds.get("provider", ""),
+            ds.get("note", ""),
+            ds.get("location", ""),
+            " ".join(ds.get("biomarkers", [])),
+            " ".join(ds.get("tags", [])),
+        ]).lower()
+        if all(kw in searchable for kw in keywords):
+            results.append(ds)
+
+    return {"total": len(results), "datasets": results}
+
+
 TOOL_FUNCTIONS = {
     "query_qc_summary": query_qc_summary,
     "search_cases": search_cases,
     "get_case_detail": get_case_detail,
     "find_server_data": find_server_data,
+    "search_datasets": search_datasets,
 }
 
 
