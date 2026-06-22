@@ -91,9 +91,9 @@ def _stain_matches(case_stain: str, detected_stain: str) -> bool:
     if detected_stain == "HE":
         return case_stain == "HE"
     if detected_stain == "IHC-nuclear":
-        return case_stain in IHC_NUCLEAR
+        return case_stain == "IHC-nuclear" or case_stain in IHC_NUCLEAR
     if detected_stain == "IHC-membrane":
-        return case_stain in IHC_MEMBRANE
+        return case_stain == "IHC-membrane" or case_stain in IHC_MEMBRANE
     return detected_stain == case_stain
 
 
