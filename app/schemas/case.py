@@ -113,3 +113,20 @@ class CaseCreate(BaseModel):
     stain_type: str
     diagnosis: Optional[str] = None
     server_location: Optional[str] = None
+
+
+class CaseUpdate(BaseModel):
+    specimen_no: Optional[str] = None
+    hospital_code: Optional[str] = None
+    patient_id: Optional[str] = None
+    patient_name: Optional[str] = None
+    patient_age: Optional[int] = None
+    patient_gender: Optional[str] = None
+    exam_no: Optional[str] = None
+    exam_date: Optional[str] = None
+    organ: Optional[str] = None
+    stain_type: Optional[str] = None
+    diagnosis: Optional[str] = None
+    pathologist: Optional[str] = None
+    suspected_disease: Optional[str] = None
+    clinical_info: Optional[str] = None

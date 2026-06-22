@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.models import Case, QcResult, Comment
-from app.schemas import CaseResponse, CaseListResponse, CaseCreate, CaseConfirmRequest, CommentCreate, CommentResponse
+from app.schemas import CaseResponse, CaseListResponse, CaseCreate, CaseUpdate, CaseConfirmRequest, CommentCreate, CommentResponse
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
 
@@ -289,6 +289,25 @@ def delete_comment(case_id: str, comment_id: str, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="Comment not found")
     db.delete(comment)
     db.commit()
+
+
+@router.patch("/{case_id}", response_model=CaseResponse)
+def update_case(case_id: str, body: CaseUpdate, db: Session = Depends(get_db)):
+    case = (
+        db.query(Case)
+        .options(joinedload(Case.qc_result), joinedload(Case.comments))
+        .filter(Case.id == case_id)
+        .first()
+    )
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    updates = body.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(case, field, value)
+    case.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(case)
+    return case
 
 
 @router.put("/{case_id}/confirm", response_model=CaseResponse)
