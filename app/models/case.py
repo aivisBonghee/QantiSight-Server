@@ -18,7 +18,7 @@ class Case(Base):
     exam_no = Column(String(30), nullable=False)
     exam_date = Column(String(10), nullable=False)
     organ = Column(String(20), nullable=False)
-    stain_type = Column(String(10), nullable=False)
+    stain_type = Column(String(20), nullable=False)
     diagnosis = Column(String(100))
     status = Column(String(15), nullable=False, default="WAITING")
     server_location = Column(String(15))
