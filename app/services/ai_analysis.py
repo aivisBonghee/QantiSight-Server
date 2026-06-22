@@ -188,6 +188,8 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
             lesion_volume = _classify_lesion_volume(cell_ratio * 100)
         heatmap_filename = heatmap_result.get("heatmap")
 
+        overall_qc_score = data.get("qc_score") or data.get("overall_qc_score")
+
         _save_qc_results(db, case_id, {
             "organ_match": organ_match,
             "detected_organ": detected_organ,
@@ -197,6 +199,7 @@ def _run_ai_analysis(db, case_id: str, filename: str, organ: str, stain_type: st
             "lesion_area_ratio": lesion_ratio,
             "lesion_volume": lesion_volume,
             "tissue_coverage": tissue_coverage,
+            "overall_qc_score": overall_qc_score,
             "lesion_detail": lesion_detail,
             "heatmap_path": f"/uploads/{heatmap_filename}" if heatmap_filename else None,
             "control_tissue_present": ic_present,
