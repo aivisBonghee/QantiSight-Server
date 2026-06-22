@@ -302,8 +302,10 @@ def search_datasets(db: Session, **kwargs):
             ds.get("provider", ""),
             ds.get("note", ""),
             ds.get("location", ""),
+            ds.get("receipt_note", ""),
             " ".join(ds.get("biomarkers", [])),
             " ".join(ds.get("tags", [])),
+            " ".join(ds.get("receipt_dates", [])),
         ]).lower()
         if all(kw in searchable for kw in keywords):
             results.append(ds)
